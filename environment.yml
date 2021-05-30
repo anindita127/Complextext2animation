@@ -1,0 +1,7 @@
+name: text2motion
+dependencies:
+  - python=3.6.10
+  - cudatoolkit=10.0.130
+  - cudnn=7.6.5
+  - ffmpeg
+  - pip
