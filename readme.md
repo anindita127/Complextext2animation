@@ -1,4 +1,4 @@
-# Synthesis of Compositional Animations from Textual Descriptions
+# Synthesizing Compositional Animations from Textual Descriptions Using an RNN-based Hierarchical Two-Stream Network
 
 Our code is tested on the following OS: 
 * Ubuntu 18.04 LTS
