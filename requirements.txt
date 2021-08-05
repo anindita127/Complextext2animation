@@ -25,3 +25,4 @@ astor
 termcolor
 keras_applications
 werkzeug
+transformers
