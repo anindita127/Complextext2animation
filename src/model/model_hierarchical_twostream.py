@@ -328,10 +328,10 @@ class PoseGenerator(nn.Module):
         velocity_loss = F.smooth_l1_loss(velocity_orig, velocity_Q_v) + \
             F.smooth_l1_loss(velocity_orig, velocity_Q_v_lang)
 
-        # internal_losses = [0.001*manifold_loss, reconstruction_loss,
-        #                    0.1*velocity_loss, 0.1 * encoder_loss]
+        internal_losses = [0.001*manifold_loss, reconstruction_loss,
+                           0.1*velocity_loss, 0.1 * encoder_loss]
 
-        return Q_vl, [reconstruction_loss]   # for ablation
+        return Q_vl, internal_losses
 
     def encode_pose(self, P_in):
         time_steps = P_in.shape[-2]
