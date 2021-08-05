@@ -26,3 +26,4 @@ termcolor
 keras_applications
 werkzeug
 transformers
+tensorboard
