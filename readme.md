@@ -1,4 +1,4 @@
-# Synthesizing Compositional Animations from Textual Descriptions Using an RNN-based Hierarchical Two-Stream Network
+# Synthesis of Compositional Animations from Textual Descriptions (ICCV 2021)
 
 Our code is tested on the following OS: 
 * Ubuntu 18.04 LTS
