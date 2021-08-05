@@ -27,7 +27,7 @@ pip install -r requirements.txt
 
 We denote the base directory of our project as `$BASE`.
 ### Data
-Download the [KIT Motion-Language dataset](https://motion-annotation.humanoids.kit.edu/dataset/) and unzip it in the `$BASE/dataset` folder.
+Download the [KIT Motion-Language dataset](https://motion-annotation.humanoids.kit.edu/dataset/) and unzip the files in the `$BASE/dataset/kit-mocap` folder.
 
 ## Running the code
 1. First, run:
