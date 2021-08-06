@@ -17,7 +17,7 @@ import os
 
 def render_all(args, exp_num):
     dir_name = args.save_dir
-    assert dir_name "Directory not given."
+    assert dir_name, 'Directory not given.'
     path2data = args.path2data
     dataset = args.dataset
     feats_kind = args.feats_kind
@@ -52,7 +52,7 @@ def render_all(args, exp_num):
                     if filename.split('_')[0] not in render_list:
                         continue
                 output = Path(tup[0])/'videos'/filename
-                if not clean_render:  # only render files which do not exist. Useful if rendering was interrupted/incomplete
+                if not args.clean_render:  # only render files which do not exist. Useful if rendering was interrupted/incomplete
                     if output.with_suffix('.mp4').exists():
                         continue
                 outputs.append(output.with_suffix('.mp4').as_posix())
