@@ -1,17 +1,4 @@
-# to run dataparallel - s2v must be a tensor
-# sampling can be made more efficient
-# slurm pipelining - train->sample->render
-# better render in pygame
-# do not load seq2seq model for training the best model
-# but we need it as a baseline
-
-# sentence_dec_cross is same accross all input sentences. If that is true, then the sentence embedding is learning nothing about the pose
-# maybe learn the input embedding using an LSTM instead of BERT
-# OR maybe train for the pose output first and then learn to predict sentences
-# OR maybe do some cyclic loss training
-
 import torch
-
 import torch.nn as nn
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.autograd import Variable
@@ -274,6 +261,14 @@ def train(args, exp_num, data=None):
         return running_loss/running_count
 
     num_epochs = args.num_epochs
+    time_list = []
+    time_list_idx = 0
+    if curriculum:
+        for power in range(1, int(np.log2(time-1)) + 1):
+            time_list.append(2**power)
+        data.update_dataloaders(time_list[0])
+    time_list.append(time)
+    tqdm.write('Training up to time: {}'.format(time_list[time_list_idx]))
 
     # Training Loop
     for epoch in tqdm(range(num_epochs), ncols=50):
@@ -290,6 +285,17 @@ def train(args, exp_num, data=None):
         # print results
         book.print_res(epoch, key_order=[
             'train', 'dev', 'test'], exp=exp_num, lr=scheduler.get_last_lr())
+        if book.stop_training(generator, epoch):
+            # if early_stopping criterion is met,
+            # start training with more time steps
+            time_list_idx += 1
+            book.stop_count = 0  # reset the threshold counter
+            book.best_dev_score = np.inf
+            generator.load_state_dict(copy.deepcopy(book.best_model))
+            if len(time_list) > time_list_idx:
+                time_ = time_list[time_list_idx]
+                data.update_dataloaders(time_)
+                tqdm.write('Training up to time: {}'.format(time_))
 
 
 if __name__ == '__main__':
