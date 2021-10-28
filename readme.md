@@ -1,7 +1,7 @@
 # Synthesis of Compositional Animations from Textual Descriptions (ICCV 2021)
 
-[Paper](https://openaccess.thecvf.com/content/ICCV2021/html/Ghosh_Synthesis_of_Compositional_Animations_From_Textual_Descriptions_ICCV_2021_paper.html)
-[Video](https://www.youtube.com/watch?v=JquWobsi6M8)
+[[Paper]](https://openaccess.thecvf.com/content/ICCV2021/html/Ghosh_Synthesis_of_Compositional_Animations_From_Textual_Descriptions_ICCV_2021_paper.html),
+[[Video]](https://www.youtube.com/watch?v=JquWobsi6M8)
 
 Our code is tested on the following OS: 
 * Ubuntu 18.04 LTS
