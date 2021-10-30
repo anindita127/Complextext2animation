@@ -26,7 +26,7 @@ _FLOAT_EPS = 1e-8
 
 
 class Data():
-    def __init__(self, path2data, dataset, lmksSubset, desc=None, perplexity=0.0, split=(0.8, 0.1), batch_size=100, time=100,
+    def __init__(self, path2data, dataset, lmksSubset, desc=None, perplexity=0.0, split=(0.6, 0.2), batch_size=100, time=100,
                  chunks=1, offset=0, shuffle=True, mask=[1, 0, 1, 1, 1, 1], feats_kind='axis-angle', s2v=False,
                  load_data=True, f_new=4):
         if feats_kind == 'quaternion':
