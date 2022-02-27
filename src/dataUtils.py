@@ -112,7 +112,6 @@ class Data():
         df_train = self.df[:end_train]
         df_dev = self.df[start_dev:end_dev]
         df_test = self.df[start_test:]
-
         minidataKwargs = {'lmksSubset': self.lmksSubset,
                           'time': self.time,
                           'offset': self.offset,
@@ -121,20 +120,32 @@ class Data():
                           'chunks': self.chunks,
                           'f_ratio': self.f_ratio,
                           'dataset': self.dataset}
-
-       
-        dataset_train = ConcatDataset([MiniData(row[self.feats_kind],
-                                                sentence_vector=row['descriptions'],
-                                                perplexity=row['perplexity'],
-                                                **minidataKwargs) for i, row in tqdm(df_train.iterrows())])
-        dataset_dev = ConcatDataset([MiniData(row[self.feats_kind],
-                                              sentence_vector=row['descriptions'],
-                                              perplexity=row['perplexity'],
-                                              **minidataKwargs) for i, row in tqdm(df_dev.iterrows())])
-        dataset_test = ConcatDataset([MiniData(row[self.feats_kind],
-                                               sentence_vector=row['descriptions'],
-                                               perplexity=row['perplexity'],
-                                               **minidataKwargs) for i, row in tqdm(df_test.iterrows())])
+        if self.s2v:
+            dataset_train = ConcatDataset([MiniData(row[self.feats_kind],
+                                                    sentence_vector=row['descriptions'],
+                                                    perplexity=row['perplexity'],
+                                                    **minidataKwargs) for i, row in tqdm(df_train.iterrows()) if row['descriptions']])
+            dataset_dev = ConcatDataset([MiniData(row[self.feats_kind],
+                                                  sentence_vector=row['descriptions'],
+                                                  perplexity=row['perplexity'],
+                                                  **minidataKwargs) for i, row in tqdm(df_dev.iterrows()) if row['descriptions']])
+            dataset_test = ConcatDataset([MiniData(row[self.feats_kind],
+                                                   sentence_vector=row['descriptions'],
+                                                   perplexity=row['perplexity'],
+                                                   **minidataKwargs) for i, row in tqdm(df_test.iterrows()) if row['descriptions']])
+        else:
+            dataset_train = ConcatDataset([MiniData(row[self.feats_kind],
+                                                    sentence_vector=row['descriptions'],
+                                                    perplexity=row['perplexity'],
+                                                    **minidataKwargs) for i, row in tqdm(df_train.iterrows())])
+            dataset_dev = ConcatDataset([MiniData(row[self.feats_kind],
+                                                    sentence_vector=row['descriptions'],
+                                                    perplexity=row['perplexity'],
+                                                    **minidataKwargs) for i, row in tqdm(df_dev.iterrows())])
+            dataset_test = ConcatDataset([MiniData(row[self.feats_kind],
+                                                    sentence_vector=row['descriptions'],
+                                                    perplexity=row['perplexity'],
+                                                    **minidataKwargs) for i, row in tqdm(df_test.iterrows())])
 
         return {'train': dataset_train,
                 'dev': dataset_dev,
