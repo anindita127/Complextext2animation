@@ -95,7 +95,7 @@ def sample(args, exp_num, data=None):
 
     # hardcoded for sampling
     batch_size = args.batch_size
-    time = args.time
+    time = 64       #fixed timestep
     chunks = args.chunks
     offset = args.offset
     # mask for delta
