@@ -496,17 +496,17 @@ def sample(args, exp_num, data=None):
     test_loss_ = [x / ntest for x in test_loss_list]
     with open(dir_name+"/test_variance_error.bin", "wb") as fp:
         pickle.dump(test_loss_, fp)
-    var_ = [x / ntest for x in var_list]
-    with open(dir_name+"/test_variance.bin", "wb") as fp:
-        pickle.dump(var_, fp)
-    dev_loss_list = loop(model, data, dev, pre, batch_size, 'dev')
-    dev_loss_ = [x / ndev for x in dev_loss_list]
-    with open(dir_name+"/dev_variance.bin", "wb") as fp:
-        pickle.dump(dev_loss_, fp)
-    train_loss_list = loop(model, data, train, pre, batch_size, 'train')
-    train_loss_ = [x / ntrain for x in train_loss_list]
-    with open(dir_name+"/train_variance.bin", "wb") as fp:
-        pickle.dump(train_loss_, fp)
+    # var_ = [x / ntest for x in var_list]
+    # with open(dir_name+"/test_variance.bin", "wb") as fp:
+    #     pickle.dump(var_, fp)
+    # dev_loss_list = loop(model, data, dev, pre, batch_size, 'dev')
+    # dev_loss_ = [x / ndev for x in dev_loss_list]
+    # with open(dir_name+"/dev_variance.bin", "wb") as fp:
+    #     pickle.dump(dev_loss_, fp)
+    # train_loss_list = loop(model, data, train, pre, batch_size, 'train')
+    # train_loss_ = [x / ntrain for x in train_loss_list]
+    # with open(dir_name+"/train_variance.bin", "wb") as fp:
+    #     pickle.dump(train_loss_, fp)
 
 
 if __name__ == '__main__':

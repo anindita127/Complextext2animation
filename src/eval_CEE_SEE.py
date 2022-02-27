@@ -158,25 +158,26 @@ def sample(args, exp_num, data=None):
     ndev = len(dev)
     ntrain = len(train)
     ntest = len(test)
-    dev_loss_cee, dev_loss_see = loop(model, data, dev, pre, batch_size, 'dev')
-    with open(dir_name+"/CEE_dev.bin", "wb") as fp:
-        pickle.dump(dev_loss_cee / ndev, fp)
-    with open(dir_name+"/SEE_dev.bin", "wb") as fp:
-        pickle.dump(dev_loss_see / ndev, fp)
-
     test_loss_cee, test_loss_see = loop(
         model, data, test, pre, batch_size, 'test')
     with open(dir_name+"/CEE_test.bin", "wb") as fp:
         pickle.dump(test_loss_cee / ntest, fp)
     with open(dir_name+"/SEE_test.bin", "wb") as fp:
         pickle.dump(test_loss_see / ntest, fp)
+    
+    # dev_loss_cee, dev_loss_see = loop(model, data, dev, pre, batch_size, 'dev')
+    # with open(dir_name+"/CEE_dev.bin", "wb") as fp:
+    #     pickle.dump(dev_loss_cee / ndev, fp)
+    # with open(dir_name+"/SEE_dev.bin", "wb") as fp:
+    #     pickle.dump(dev_loss_see / ndev, fp)
 
-    train_loss_cee, train_loss_see = loop(
-        model, data, train, pre, batch_size, 'train')
-    with open(dir_name+"/CEE_train.bin", "wb") as fp:
-        pickle.dump(train_loss_cee / ntrain, fp)
-    with open(dir_name+"/SEE_train.bin", "wb") as fp:
-        pickle.dump(train_loss_see / ntrain, fp)
+
+    # train_loss_cee, train_loss_see = loop(
+    #     model, data, train, pre, batch_size, 'train')
+    # with open(dir_name+"/CEE_train.bin", "wb") as fp:
+    #     pickle.dump(train_loss_cee / ntrain, fp)
+    # with open(dir_name+"/SEE_train.bin", "wb") as fp:
+    #     pickle.dump(train_loss_see / ntrain, fp)
 
 
 if __name__ == '__main__':

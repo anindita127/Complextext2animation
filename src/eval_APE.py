@@ -349,20 +349,20 @@ def sample(args, exp_num, data=None):
     ndev = len(dev)
     ntrain = len(train)
     ntest = len(test)
-    dev_loss_list = loop(model, data, dev, pre, batch_size, 'dev')
-    dev_loss_ = [x / ndev for x in dev_loss_list]
-    with open(dir_name+"/deverror_global.bin", "wb") as fp:
-        pickle.dump(dev_loss_, fp)
 
     test_loss_list = loop(model, data, test, pre, batch_size, 'test')
     test_loss_ = [x / ntest for x in test_loss_list]
     with open(dir_name+"/testerror_global.bin", "wb") as fp:
         pickle.dump(test_loss_, fp)
 
-    train_loss_list = loop(model, data, train, pre, batch_size, 'train')
-    train_loss_ = [x / ntrain for x in train_loss_list]
-    with open(dir_name+"/trainerror_global.bin", "wb") as fp:
-        pickle.dump(train_loss_, fp)
+    # dev_loss_list = loop(model, data, dev, pre, batch_size, 'dev')
+    # dev_loss_ = [x / ndev for x in dev_loss_list]
+    # with open(dir_name+"/deverror_global.bin", "wb") as fp:
+    #     pickle.dump(dev_loss_, fp)
+    # train_loss_list = loop(model, data, train, pre, batch_size, 'train')
+    # train_loss_ = [x / ntrain for x in train_loss_list]
+    # with open(dir_name+"/trainerror_global.bin", "wb") as fp:
+    #     pickle.dump(train_loss_, fp)
     # baseline_loss_sum = list(
     #     map(add, list(map(add, dev_loss_list, test_loss_list)), train_loss_list))
     # total_datas = len(dev) + len(test) + len(train)
