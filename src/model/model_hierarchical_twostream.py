@@ -64,19 +64,19 @@ import numpy as np
 #         return self.conv(xs)
 
 
-# class TeacherForcing():
-#     '''
-#     Sends True at the start of training, i.e. Use teacher forcing maybe.
-#     Progressively becomes False by the end of training, start using gt to train
-#     '''
+class TeacherForcing():
+    '''
+    Sends True at the start of training, i.e. Use teacher forcing maybe.
+    Progressively becomes False by the end of training, start using gt to train
+    '''
 
-#     def __init__(self, max_epoch):
-#         self.max_epoch = max_epoch
+    def __init__(self, max_epoch):
+        self.max_epoch = max_epoch
 
-#     def __call__(self, epoch, batch_size=1):
-#         p = epoch*1./self.max_epoch
-#         random = torch.rand(batch_size)
-#         return (p < random).double()
+    def __call__(self, epoch, batch_size=1):
+        p = epoch*1./self.max_epoch
+        random = torch.rand(batch_size)
+        return (p < random).double()
 
 # Sequence to Sequence AutoEncoder
 
