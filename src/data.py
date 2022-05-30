@@ -10,7 +10,9 @@ from utils.skeleton import Skeleton
 from utils.quaternion import *
 from utils.visualization import *
 import os
-
+import sys
+sys.path.append('.')
+sys.path.append('..')
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -24,10 +26,10 @@ import json
 import os
 import sys
 import inspect
-currentdir = os.path.dirname(os.path.abspath(
-    inspect.getfile(inspect.currentframe())))
-parentdir = os.path.dirname(currentdir)
-sys.path.insert(0, parentdir)
+# currentdir = os.path.dirname(os.path.abspath(
+#     inspect.getfile(inspect.currentframe())))
+# parentdir = os.path.dirname(currentdir)
+# sys.path.insert(0, parentdir)
 
 
 # import pickle as pkl
@@ -184,14 +186,14 @@ class RawData():
         feet_l_z = (positions[1:, fid_l, 2] - positions[:-1, fid_l, 2])**2
         feet_l_h = positions[:-1, fid_l, 1]
         feet_l = (((feet_l_x + feet_l_y + feet_l_z) < velfactor)
-                  & (feet_l_h < heightfactor)).astype(np.float)
+                  & (feet_l_h < heightfactor)).astype(float)
 
         feet_r_x = (positions[1:, fid_r, 0] - positions[:-1, fid_r, 0])**2
         feet_r_y = (positions[1:, fid_r, 1] - positions[:-1, fid_r, 1])**2
         feet_r_z = (positions[1:, fid_r, 2] - positions[:-1, fid_r, 2])**2
         feet_r_h = positions[:-1, fid_r, 1]
         feet_r = (((feet_r_x + feet_r_y + feet_r_z) < velfactor)
-                  & (feet_r_h < heightfactor)).astype(np.float)
+                  & (feet_r_h < heightfactor)).astype(float)
 
         """ Get Root Velocity """
         velocity = (positions[1:, 0:1] - positions[:-1, 0:1]).copy()
@@ -257,7 +259,7 @@ class RawData():
         root_ry = integrator(root_ry).squeeze(0).squeeze(0).numpy()
         rotations = np.stack([np.cos(root_ry/2), np.zeros_like(root_ry),
                               np.sin(root_ry/2), np.zeros_like(root_ry)],
-                             axis=-1).astype(np.float)
+                             axis=-1).astype(float)
         rotations = np.expand_dims(rotations, axis=1)
 
         ''' Rotate positions by adding Y rotations '''
@@ -293,9 +295,9 @@ class KITMocap(RawData):
 
         # Uncomment this when running in DGX everytime
 
-        self._SKELPATH = base_path + 'dataProcessing/skeleton.p'
-        self._MMMSKELPATH = base_path + 'skeleton.xml'
-        self._MMMSAMPLEPATH = base_path + 'dataProcessing/00001_mmm.xml'
+        self._SKELPATH = base_path + 'src/dataProcessing/skeleton.p'
+        self._MMMSKELPATH = base_path + 'src/skeleton.xml'
+        self._MMMSAMPLEPATH = base_path + 'src/dataProcessing/00001_mmm.xml'
 
         os.makedirs(Path(self._SKELPATH).parent, exist_ok=True)
         # get the skeleton and permutation
@@ -317,12 +319,11 @@ class KITMocap(RawData):
                 annotpath = Path(
                     tup[0][0])/(filename.split('_')[0] + '_annotations.json')
                 annot = json.load(open(annotpath, 'r'))
-                meta_path = Path(tup[0][0]) / \
-                    (filename.split('_')[0] + '_meta.json')
+                meta_path = Path(tup[0][0])/(filename.split('_')[0] + '_meta.json')
                 meta_annot = json.load(open(meta_path, 'r'))
                 quatpath = filename.split('_')[0] + '_quat.csv'
                 axpath = filename.split('_')[0] + '_ax.csv'
-                fkepath = filename.split('_')[0] + '_fke.csv'
+                fkepath = filename.split('_')[0] + '_rifke.fke'
                 rifkepath = filename.split('_')[0] + '_rifke.csv'
                 if annot:
                     kount = 0
@@ -333,7 +334,8 @@ class KITMocap(RawData):
                                      (Path(tup[0][0])/axpath).as_posix(),
                                      (Path(tup[0][0])/fkepath).as_posix(),
                                      (Path(tup[0][0])/rifkepath).as_posix(),
-                                     meta_annot['annotation_perplexities'][kount]])
+                                     meta_annot['annotation_perplexities'][kount]
+                                     ])
                         kount += 1
 
                 else:
@@ -343,7 +345,8 @@ class KITMocap(RawData):
                                  (Path(tup[0][0])/axpath).as_posix(),
                                  (Path(tup[0][0])/fkepath).as_posix(),
                                  (Path(tup[0][0])/rifkepath).as_posix(),
-                                 ''])
+                                 ''
+                                 ])
 
         self.df = pd.DataFrame(data=data, columns=[
                                'euler', 'descriptions', 'quaternion', 'axis-angle', 'fke', 'rifke', 'perplexity'])
@@ -503,13 +506,13 @@ class KITMocap(RawData):
     def mmm2csv(self, src):
         joint_names, mmm_dict = parse_motions(src.as_posix())[0]
         root_pos = np.array(mmm_dict['root_pos'],
-                            dtype=np.float)  # * 0.001 / 0.056444
+                            dtype=float)  # * 0.001 / 0.056444
         #root_pos = root_pos[:, [1,2,0]]
         root_rot = np.array(mmm_dict['root_rot'],
-                            dtype=np.float)  # * 180/np.pi
+                            dtype=float)  # * 180/np.pi
         #root_rot = root_rot[:, [1,2,0]]
         joint_pos = np.array(
-            mmm_dict['joint_pos'], dtype=np.float)  # * 180/np.pi
+            mmm_dict['joint_pos'], dtype=float)  # * 180/np.pi
 
         joint_dict = {}
         for idx, name in enumerate(joint_names):
@@ -613,8 +616,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-dataset', default='KITMocap', type=str,
                         help='dataset kind')
-    parser.add_argument('-path2data', default='../dataset/kit-mocap', type=str,
+    parser.add_argument('-path2data', default='./dataset/kit-mocap', type=str,
                         help='dataset kind')
     args, _ = parser.parse_known_args()
-    eval(args.dataset)(args.path2data, preProcess_flag=True)
+    eval(args.dataset)(args.path2data, preProcess_flag=False)
     print('Succesfully Preprocessed {} data'.format(args.dataset))
