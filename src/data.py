@@ -619,5 +619,5 @@ if __name__ == '__main__':
     parser.add_argument('-path2data', default='./dataset/kit-mocap', type=str,
                         help='dataset kind')
     args, _ = parser.parse_known_args()
-    eval(args.dataset)(args.path2data, preProcess_flag=False)
+    eval(args.dataset)(args.path2data, preProcess_flag=True)
     print('Succesfully Preprocessed {} data'.format(args.dataset))
