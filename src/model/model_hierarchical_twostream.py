@@ -2,118 +2,120 @@ import torch
 import torch.nn as nn
 from torch.nn.utils import weight_norm
 import torch.nn.functional as F
-from nlp.lstm import BERTSentenceEncoder, LSTMEncoder
+from nlp.decoder import *
+from nlp.lstm import *
+from nlp.attention import attention
 import pdb
 
 import pickle as pkl
 import numpy as np
 
 
-class CausalConv1d(torch.nn.Conv1d):
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 kernel_size,
-                 stride=1,
-                 dilation=1,
-                 groups=1,
-                 bias=True):
-        self.__padding = (kernel_size - 1) * dilation
+# class CausalConv1d(torch.nn.Conv1d):
+#     def __init__(self,
+#                  in_channels,
+#                  out_channels,
+#                  kernel_size,
+#                  stride=1,
+#                  dilation=1,
+#                  groups=1,
+#                  bias=True):
+#         self.__padding = (kernel_size - 1) * dilation
 
-        super(CausalConv1d, self).__init__(
-            in_channels,
-            out_channels,
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=self.__padding,
-            dilation=dilation,
-            groups=groups,
-            bias=bias)
+#         super(CausalConv1d, self).__init__(
+#             in_channels,
+#             out_channels,
+#             kernel_size=kernel_size,
+#             stride=stride,
+#             padding=self.__padding,
+#             dilation=dilation,
+#             groups=groups,
+#             bias=bias)
 
-    def forward(self, input):
-        result = super(CausalConv1d, self).forward(input)
-        if self.__padding != 0:
-            return result[:, :, :-self.__padding]
-        return result
-
-
-class Integrator(nn.Module):
-    '''
-    A velocity integrator.
-    If we have displacement values for translation and such, and we know the exact timesteps of the signal, 
-    we can calculate the global values efficiently using a convolutional layer with weights set to 1 and kernel_size=timesteps
-
-    Note: this method will not work for realtime scenarios. Although, it is efficient enough to keep adding displacements over time
-    '''
-
-    def __init__(self, channels, time_steps):
-        super(Integrator, self).__init__()
-        self.conv = CausalConv1d(in_channels=channels,
-                                 out_channels=channels,
-                                 kernel_size=time_steps,
-                                 stride=1,
-                                 dilation=1,
-                                 groups=channels,
-                                 bias=False)
-        self.conv.weight = nn.Parameter(torch.ones_like(
-            self.conv.weight), requires_grad=False)
-
-    def forward(self, xs):
-        return self.conv(xs)
+#     def forward(self, input):
+#         result = super(CausalConv1d, self).forward(input)
+#         if self.__padding != 0:
+#             return result[:, :, :-self.__padding]
+#         return result
 
 
-class TeacherForcing():
-    '''
-    Sends True at the start of training, i.e. Use teacher forcing maybe.
-    Progressively becomes False by the end of training, start using gt to train
-    '''
+# class Integrator(nn.Module):
+#     '''
+#     A velocity integrator.
+#     If we have displacement values for translation and such, and we know the exact timesteps of the signal, 
+#     we can calculate the global values efficiently using a convolutional layer with weights set to 1 and kernel_size=timesteps
 
-    def __init__(self, max_epoch):
-        self.max_epoch = max_epoch
+#     Note: this method will not work for realtime scenarios. Although, it is efficient enough to keep adding displacements over time
+#     '''
 
-    def __call__(self, epoch, batch_size=1):
-        p = epoch*1./self.max_epoch
-        random = torch.rand(batch_size)
-        return (p < random).double()
+#     def __init__(self, channels, time_steps):
+#         super(Integrator, self).__init__()
+#         self.conv = CausalConv1d(in_channels=channels,
+#                                  out_channels=channels,
+#                                  kernel_size=time_steps,
+#                                  stride=1,
+#                                  dilation=1,
+#                                  groups=channels,
+#                                  bias=False)
+#         self.conv.weight = nn.Parameter(torch.ones_like(
+#             self.conv.weight), requires_grad=False)
+
+#     def forward(self, xs):
+#         return self.conv(xs)
+
+
+# class TeacherForcing():
+#     '''
+#     Sends True at the start of training, i.e. Use teacher forcing maybe.
+#     Progressively becomes False by the end of training, start using gt to train
+#     '''
+
+#     def __init__(self, max_epoch):
+#         self.max_epoch = max_epoch
+
+#     def __call__(self, epoch, batch_size=1):
+#         p = epoch*1./self.max_epoch
+#         random = torch.rand(batch_size)
+#         return (p < random).double()
 
 # Sequence to Sequence AutoEncoder
 
 
-class TrajEncoder(nn.Module):
-    def __init__(self, hidden, num_layers=1):
-        super(TrajEncoder, self).__init__()
-        # self.traj = nn.Linear(h1, h2)
-        self.rnn = nn.GRU(1, hidden, num_layers=num_layers, batch_first=True)
+# class TrajEncoder(nn.Module):
+#     def __init__(self, hidden, num_layers=1):
+#         super(TrajEncoder, self).__init__()
+#         # self.traj = nn.Linear(h1, h2)
+#         self.rnn = nn.GRU(1, hidden, num_layers=num_layers, batch_first=True)
 
-    def forward(self, traj_input):
-        traj_layer1, h = self.rnn(traj_input.unsqueeze(-1))
-        # output_traj = self.traj(traj_layer1)
-        return traj_layer1[:, -1, :]
+#     def forward(self, traj_input):
+#         traj_layer1, h = self.rnn(traj_input.unsqueeze(-1))
+#         # output_traj = self.traj(traj_layer1)
+#         return traj_layer1[:, -1, :]
 
 
-class TrajDecoder(nn.Module):
-    def __init__(self, hidden, num_layers=1):
-        super(TrajDecoder, self).__init__()
-        self.traj = nn.Linear(hidden, 1)
-        self.rnn = nn.GRUCell(1, hidden)
-        self.tf = TeacherForcing(0.1)
+# class TrajDecoder(nn.Module):
+#     def __init__(self, hidden, num_layers=1):
+#         super(TrajDecoder, self).__init__()
+#         self.traj = nn.Linear(hidden, 1)
+#         self.rnn = nn.GRUCell(1, hidden)
+#         self.tf = TeacherForcing(0.1)
 
-    def forward(self, traj_z, timesteps, traj_input, epoch=np.inf):
-        traj = traj_input[:, 0]
-        traj = traj.unsqueeze(-1)
-        Y = []
-        h = traj_z
-        for t in range(timesteps):
-            # hidden = torch.cat((traj_z[:,t,:], h), dim=-1)
-            h = self.rnn(traj, h)
-            traj = self.traj(h) + traj
-            Y.append(traj.unsqueeze(1))
-            if t > 0:
-                mask = self.tf(epoch, h.shape[0]).double(
-                ).view(-1, 1).to(traj.device)
-                traj = mask * traj_input[:, t-1] + (1-mask) * traj
+#     def forward(self, traj_z, timesteps, traj_input, epoch=np.inf):
+#         traj = traj_input[:, 0]
+#         traj = traj.unsqueeze(-1)
+#         Y = []
+#         h = traj_z
+#         for t in range(timesteps):
+#             # hidden = torch.cat((traj_z[:,t,:], h), dim=-1)
+#             h = self.rnn(traj, h)
+#             traj = self.traj(h) + traj
+#             Y.append(traj.unsqueeze(1))
+#             if t > 0:
+#                 mask = self.tf(epoch, h.shape[0]).double(
+#                 ).view(-1, 1).to(traj.device)
+#                 traj = mask * traj_input[:, t-1] + (1-mask) * traj
 
-        return torch.cat(Y, dim=1)
+#         return torch.cat(Y, dim=1)
 
 
 class PoseEncoder(nn.Module):
@@ -156,8 +158,7 @@ class PoseEncoder(nn.Module):
             torch.cat((left_arm_layer1, mid_body_layer1), dim=-1))
 
         upperbody = torch.cat((right_arm_layer2, left_arm_layer2), dim=-1)
-        upperbody_bn = self.batchnorm_up(
-            upperbody.permute(0, 2, 1)).permute(0, 2, 1)
+        upperbody_bn = self.batchnorm_up(upperbody.permute(0, 2, 1)).permute(0, 2, 1)
         z_p_upper, h = self.layer3_arm(upperbody_bn.view(
             upperbody.shape[0], upperbody.shape[1], -1))
 
@@ -170,8 +171,7 @@ class PoseEncoder(nn.Module):
             torch.cat((left_leg_layer1, mid_body_layer1), dim=-1))
 
         lower_body = torch.cat((right_leg_layer2, left_leg_layer2), dim=-1)
-        lower_body_bn = self.batchnorm_lo(
-            lower_body.permute(0, 2, 1)).permute(0, 2, 1)
+        lower_body_bn = self.batchnorm_lo(lower_body.permute(0, 2, 1)).permute(0, 2, 1)
         z_p_lower, h = self.layer3_leg(lower_body_bn.view(
             lower_body.shape[0], lower_body.shape[1], -1))
 
@@ -226,8 +226,7 @@ class VelDecoderCell(nn.Module):
             left_leg_layer2[..., :layer1_shape])
         torso_4_layer1 = self.layer1_torso_dec(
             left_leg_layer2[..., -layer1_shape:])
-        torso = (torso_1_layer1 + torso_2_layer1 +
-                 torso_3_layer1 + torso_4_layer1)/4.
+        torso = (torso_1_layer1 + torso_2_layer1 + torso_3_layer1 + torso_4_layer1)/4.
         torso_trunk = torso[..., :13]
         torso_root = torso[..., -3:]
         pred = torch.cat(
@@ -292,11 +291,7 @@ class PoseGenerator(nn.Module):
         self.pose_enc = PoseEncoder(self.h1, self.h2, self.h3)
         self.vel_dec = VelDecoder(self.h1, self.h2, self.h3)
         self.sentence_enc = BERTSentenceEncoder(2*self.h3)
-        if load:
-            self.load_state_dict(torch.load(open(load, 'rb')))
-            print('PoseGenerator Model Loaded')
-        else:
-            print('PoseGenerator Model initialising randomly')
+
 
     def forward(self, P_in, gt, s2v, train=False, epoch=np.inf):
         time_steps = P_in.shape[-2]
@@ -328,8 +323,7 @@ class PoseGenerator(nn.Module):
         velocity_loss = F.smooth_l1_loss(velocity_orig, velocity_Q_v) + \
             F.smooth_l1_loss(velocity_orig, velocity_Q_v_lang)
 
-        internal_losses = [0.001*manifold_loss, reconstruction_loss,
-                           0.1*velocity_loss, 0.1 * encoder_loss]
+        internal_losses = [0.001*manifold_loss, reconstruction_loss, 0.1*velocity_loss, 0.1 * encoder_loss]
 
         return Q_vl, internal_losses
 
@@ -387,11 +381,10 @@ class PoseGenerator(nn.Module):
         P_in = x[..., :-4]
         z_p_upper, z_p_lower = self.pose_enc(P_in)
         language_z, _ = self.sentence_enc(s2v)
-        z = torch.cat((z_p_upper, z_p_lower), dim=-1)
+        z = torch.cat((z_p_upper, z_p_lower),dim=-1)
         gs = language_z * torch.transpose(language_z, 0, 1)
         gp = z * torch.transpose(z, 0, 1)
         return z, language_z, gp, gs
-
 
 class Discriminator(nn.Module):
     def __init__(self):
