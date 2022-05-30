@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import pickle
 from dataUtils import *
-from lossUtils import *
 from model.model_hierarchical_twostream import *
 from data import *
 from common.transforms3dbatch import *
