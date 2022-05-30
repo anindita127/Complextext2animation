@@ -74,12 +74,9 @@ def loop(args, exp_num):
         columns = ['root_tx', 'root_ty', 'root_tz'] + data.columns[1]
         columns = ['root_ty'] + data.columns[1]
 
-    pre = Transforms(transforms, columns, seed, mask, feats_kind)
-
     for count, batch in (enumerate(train)):
         pose, trajectory, _ = batch['input']
         x = torch.cat((trajectory, pose), dim=-1)
-        x = pre.transform(x)
 
         x = x.squeeze(0)
         running_sum += x.sum(dim=0)
