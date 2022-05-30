@@ -2,9 +2,7 @@ import torch
 import torch.nn as nn
 from torch.nn.utils import weight_norm
 import torch.nn.functional as F
-from nlp.decoder import *
 from nlp.lstm import *
-from nlp.attention import attention
 import pdb
 
 import pickle as pkl
