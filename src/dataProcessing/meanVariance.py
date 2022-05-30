@@ -16,11 +16,10 @@ import numpy as np
 
 def loadMeanVariance(columns_subset, seed, mask, feats_kind, dataset, f_new):
     mask_str = '_'.join(['{}'.format(i) for i in mask])
-    base_path = ''
 
-    mean = pd.read_csv(base_path + 'dataProcessing/meanVar/mean_{}_{}_{}_{}_{}.csv'.format(
+    mean = pd.read_csv('src/dataProcessing/meanVar/mean_{}_{}_{}_{}_{}.csv'.format(
         seed, mask_str, feats_kind, dataset, f_new), index_col=0)[columns_subset].values
-    variance = pd.read_csv(base_path + 'dataProcessing/meanVar/variance_{}_{}_{}_{}_{}.csv'.format(
+    variance = pd.read_csv('src/dataProcessing/meanVar/variance_{}_{}_{}_{}_{}.csv'.format(
         seed, mask_str, feats_kind, dataset, f_new), index_col=0)[columns_subset].values
 
     mean = torch.from_numpy(mean).type(torch.float64)
@@ -42,7 +41,7 @@ def loop(args, exp_num):
     seed = args.seed
     mask = args.mask
     feats_kind = args.feats_kind
-    transforms = ['quat']
+    transforms = ['zNorm']
     f_new = args.f_new
 
     # Load data iterables
@@ -75,12 +74,12 @@ def loop(args, exp_num):
         columns = ['root_tx', 'root_ty', 'root_tz'] + data.columns[1]
         columns = ['root_ty'] + data.columns[1]
 
-    #pre = Transforms(transforms, columns, seed, mask, feats_kind)
+    pre = Transforms(transforms, columns, seed, mask, feats_kind)
 
     for count, batch in (enumerate(train)):
         pose, trajectory, _ = batch['input']
         x = torch.cat((trajectory, pose), dim=-1)
-        #x = pre.transform(x)
+        x = pre.transform(x)
 
         x = x.squeeze(0)
         running_sum += x.sum(dim=0)
@@ -97,11 +96,11 @@ def loop(args, exp_num):
     variance = variance + (zero_mask*eps).type(torch.float64)
 
     mask_str = '_'.join(['{}'.format(i) for i in mask])
-    os.makedirs('dataProcessing/meanVar', exist_ok=True)
+    os.makedirs('src/dataProcessing/meanVar', exist_ok=True)
     pd.DataFrame(data=mean.reshape(1, -1).numpy(), columns=columns).to_csv(
-        'dataProcessing/meanVar/mean_{}_{}_{}_{}_{}.csv'.format(seed, mask_str, feats_kind, dataset, f_new))
+        'src/dataProcessing/meanVar/mean_{}_{}_{}_{}_{}.csv'.format(seed, mask_str, feats_kind, dataset, f_new))
     pd.DataFrame(data=variance.reshape(1, -1).numpy(), columns=columns).to_csv(
-        'dataProcessing/meanVar/variance_{}_{}_{}_{}_{}.csv'.format(seed, mask_str, feats_kind, dataset, f_new))
+        'src/dataProcessing/meanVar/variance_{}_{}_{}_{}_{}.csv'.format(seed, mask_str, feats_kind, dataset, f_new))
 
 
 if __name__ == '__main__':
