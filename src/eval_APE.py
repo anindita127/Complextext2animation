@@ -2,13 +2,12 @@ import torch
 import torch.nn as nn
 import pickle
 from dataUtils import *
+from lossUtils import *
 from model.model_hierarchical_twostream import *
 from data import *
 from common.transforms3dbatch import *
 from torch._C import *
 
-# from pycasper.name import Name
-# from pycasper.BookKeeper import *
 from BookKeeper import *
 from argsUtils import argparseNloop
 from renderUtils import parallelRender
@@ -25,8 +24,6 @@ def get_mask_indices(mask):
         if m:
             indices.append(i)
     return indices
-
-# get delta based on mask
 
 
 def local2global(outputs_list, start_trajectory_list, input_shape, trajectory_size, mask):
@@ -83,8 +80,6 @@ def sample(args, exp_num, data=None):
     book = BookKeeper(args, args_subset, args_dict_update={})
     args = book.args
     dir_name = book.name.dir(args.save_dir)
-
-    # dir_name = args.load[:-2]
     # Training parameters
     path2data = args.path2data
     dataset = args.dataset
@@ -95,7 +90,7 @@ def sample(args, exp_num, data=None):
 
     # hardcoded for sampling
     batch_size = args.batch_size
-    time = 64       #fixed timestep
+    time = args.time
     chunks = args.chunks
     offset = args.offset
     # mask for delta
@@ -106,11 +101,10 @@ def sample(args, exp_num, data=None):
     s2v = args.s2v
     f_new = args.f_new
     curriculum = args.curriculum
-
     # Load data iterables
     if data is None:
         data = Data(path2data, dataset, lmksSubset, desc,
-                    split, batch_size=batch_size,
+                    split=split, batch_size=batch_size,
                     time=time,
                     chunks=chunks,
                     offset=offset,
@@ -160,7 +154,7 @@ def sample(args, exp_num, data=None):
         # model_dict = checkpoint['model']
         # for param_tensor in model_dict:
         # 	print(param_tensor, "\t")
-        #
+        # 
     # Loss function
     mse_loss = nn.MSELoss(reduction='mean')
 
@@ -240,13 +234,13 @@ def sample(args, exp_num, data=None):
 
                 if offset == 0:
                     y_cap, internal_losses = model.sample(
-                        s2v, time_steps=x.shape[-2], start=start)
+                            s2v, time_steps=x.shape[-2], start=start)
                 else:
                     assert 0, 'offset = {}, it must be 0 for now'.format(
                         offset)
                 # y_cap = pre.inv_transform(y_cap)
                 # y = pre.inv_transform(y)
-                trajectory_loss_ += math.sqrt(mse_loss(y_cap[:, 0], y[:, 0]))
+                trajectory_loss_ += math.sqrt(mse_loss(y_cap[:,:, 0], y[:,:, 0]))
                 pelvis_loss_ += math.sqrt(mse_loss(y_cap[:, :, 1], y[:, :, 1])) + \
                     math.sqrt(mse_loss(y_cap[:, :, 2], y[:, :, 2])) + \
                     math.sqrt(mse_loss(y_cap[:, :, 3], y[:, :, 3]))
@@ -335,13 +329,14 @@ def sample(args, exp_num, data=None):
                 # loss = loss.detach()
                 y_cap = y_cap.detach()
 
+            
             if count >= 0 and args.debug:  # debugging by overfitting
                 break
 
         total_loss = [trajectory_loss_, pelvis_loss_, torso_loss_, lowerneck_loss_,  upperneck_loss_,
-                      leftshoulder_loss_, leftelbow_loss_, leftwrist_loss_, rightshoulder_loss_, rightelbow_loss_,
-                      rightwrist_loss_, lefthip_loss_, leftknee_loss_, leftankle_loss_, leftfoot_loss_, righthip_loss_,
-                      rightknee_loss_, rightankle_loss_, rightfoot_loss_, root_loss_]
+         leftshoulder_loss_, leftelbow_loss_, leftwrist_loss_, rightshoulder_loss_, rightelbow_loss_, 
+         rightwrist_loss_, lefthip_loss_, leftknee_loss_, leftankle_loss_, leftfoot_loss_, righthip_loss_, 
+         rightknee_loss_, rightankle_loss_, rightfoot_loss_, root_loss_ ]
 
         return total_loss
 
@@ -349,16 +344,16 @@ def sample(args, exp_num, data=None):
     ndev = len(dev)
     ntrain = len(train)
     ntest = len(test)
+    # dev_loss_list = loop(model, data, dev, pre, batch_size, 'dev')
+    # dev_loss_ = [x / ndev for x in dev_loss_list]
+    # with open(dir_name+"/deverror_global.bin", "wb") as fp:
+    #     pickle.dump(dev_loss_, fp)
 
     test_loss_list = loop(model, data, test, pre, batch_size, 'test')
     test_loss_ = [x / ntest for x in test_loss_list]
     with open(dir_name+"/testerror_global.bin", "wb") as fp:
         pickle.dump(test_loss_, fp)
 
-    # dev_loss_list = loop(model, data, dev, pre, batch_size, 'dev')
-    # dev_loss_ = [x / ndev for x in dev_loss_list]
-    # with open(dir_name+"/deverror_global.bin", "wb") as fp:
-    #     pickle.dump(dev_loss_, fp)
     # train_loss_list = loop(model, data, train, pre, batch_size, 'train')
     # train_loss_ = [x / ntrain for x in train_loss_list]
     # with open(dir_name+"/trainerror_global.bin", "wb") as fp:
