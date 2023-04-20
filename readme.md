@@ -63,3 +63,6 @@ python eval_CEE_SEE.py -load save/model/$weights
 
 7. Rendering the output files:
 ```python render.py -dataset KITMocap -path2data ../dataset/kit-mocap -feats_kind rifke -clean_render 0 -save_dir save/model/$OUTPUT```
+
+## License
+This code is distributed under an [MIT LICENSE](LICENSE).
